@@ -5,6 +5,8 @@ import requests
 import io
 import easygui
 from openai import OpenAI
+import os
+import tempfile
 
 client = OpenAI(
     api_key="sk-xxx",
@@ -172,28 +174,33 @@ class ImageApp:
         original_image = Image.open(image_path)
         original_size = original_image.size
         marked_image = self.draw_mask(image_path)
-        buffer = io.BytesIO()
-        marked_image.save(buffer, format="PNG")
-        buffer.seek(0)
-        marked_image = buffer
+
+        # Save marked image to a unique temporary PNG file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
+            temp_image_path = tmp_file.name
+            marked_image.save(temp_image_path, format="PNG")
 
         prompt = self.prompt_for_input("Enter a description of the changes you want to make to the image:")
         if not prompt:
+            os.remove(temp_image_path)
             return
 
         n = self.get_integer("Number of Edits", "How many edits would you like to generate?", 1, 10)
         if not n:
+            os.remove(temp_image_path)
             return
 
         self.update_status("Editing image, please wait...")
         try:
-            response = client.images.edit(
-                model="dall-e-2",
-                image=marked_image,
-                prompt=prompt,
-                n=n,
-                size="1024x1024"
-            )
+            with open(temp_image_path, "rb") as image_file:
+                response = client.images.edit(
+                    model="dall-e-2",
+                    image=image_file,
+                    prompt=prompt,
+                    n=n,
+                    size="1024x1024"
+                )
+
             for data in response.data:
                 edited_image_path = self.download_image(data.url)
 
@@ -201,14 +208,17 @@ class ImageApp:
                 edited_image = edited_image.resize(original_size, Image.LANCZOS)
                 edited_image.save(edited_image_path)
                 self.show_image(edited_image_path)
+
         except Exception as e:
             self.update_status("Failed to edit image.")
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
             print(e)
-            return
+        finally:
+            os.remove(temp_image_path)  # Clean up temp file
 
         self.update_status("Image edited successfully")
 
+    
     def create_variation(self):
         if not self.selected_image:
             messagebox.showinfo("No Image Selected", "Please select an image to create variations.")
