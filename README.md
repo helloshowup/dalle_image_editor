@@ -73,7 +73,7 @@ pip install tk pillow requests easygui openai
    - All images will be removed from the display.
 
 ## Notes
-- Ensure that you have a functional OpenAI API key and replace `"sk-xxx"` with your actual API key in the script.
+- Ensure that you have a functional OpenAI API key. The application will use the value of the `OPENAI_API_KEY` environment variable if set, otherwise you will be prompted to provide the key at runtime.
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for more details.
