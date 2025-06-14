@@ -1,0 +1,8 @@
+# Dependencies for dalle_image_editor
+# Provided from README instructions
+
+tk
+pillow
+requests
+easygui
+openai
