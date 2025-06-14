@@ -8,8 +8,13 @@ from openai import OpenAI
 import os
 import tempfile
 
+# Read the API key from environment or prompt the user.
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    api_key = simpledialog.askstring("API Key", "Enter your OpenAI API key:")
+
 client = OpenAI(
-    api_key="sk-xxx",
+    api_key=api_key,
     base_url="https://api.openai.com/v1/"
 )
 
